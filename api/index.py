@@ -12,29 +12,37 @@ kv = Redis(
 )
 
 def get_initial_data():
-    # Gunakan path absolut agar Vercel tidak bingung mencari file
     import os
-    
-    # Mencari lokasi file asia_teams.json di folder utama (root)
-    # Path ini naik satu level dari folder 'api'
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(base_path, '..', 'asia_teams.json')
+    # Mencari file asia_teams.json di folder utama (naik 1 level dari api/)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    json_path = os.path.join(current_dir, '..', 'asia_teams.json')
     
     try:
         with open(json_path, 'r') as f:
             data = json.load(f)
         return data['AFC_Teams']
     except Exception as e:
-        # Jika file masih tidak ketemu, kita masukkan data manual sedikit agar tidak kosong
+        # Jika file beneran tidak ketemu, ini data manual cadangan (hardcoded)
+        # Tambahkan negara lain di sini agar tidak cuma Indonesia
         return [
             {"negara": "Jepang", "poin": 1628.81},
             {"negara": "Iran", "poin": 1611.16},
             {"negara": "Korea Selatan", "poin": 1563.99},
+            {"negara": "Australia", "poin": 1552.71},
+            {"negara": "Qatar", "poin": 1507.94},
             {"negara": "Indonesia", "poin": 1100.12}
         ]
-
+        
 @app.route('/')
+
 def index():
+    try:
+        # BARIS DARURAT: Hapus ini setelah semua negara muncul!
+        kv.delete('afc_teams') 
+        
+        raw_data = kv.get('afc_teams')
+        # ... sisa kode lainnya tetap sama ...
+    
     try:
         # 1. Ambil data dari Redis
         raw_data = kv.get('afc_teams')
