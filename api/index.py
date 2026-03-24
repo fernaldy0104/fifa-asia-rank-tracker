@@ -6,8 +6,11 @@ from upstash_redis import Redis
 app = Flask(__name__, template_folder='../templates')
 
 # Koneksi ke Redis
-kv = Redis(url=os.environ.get('REDIS_URL'), token=os.environ.get('REDIS_TOKEN'))
-
+# Gunakan nama variabel baru yang kamu buat tadi
+kv = Redis(
+    url=os.environ.get('UPSTASH_REDIS_REST_URL'), 
+    token=os.environ.get('UPSTASH_REDIS_REST_TOKEN')
+)
 def get_initial_data():
     # Mengacu ke file json di folder utama
     json_path = os.path.join(os.path.dirname(__file__), '..', 'asia_teams.json')
