@@ -1,3 +1,5 @@
+with open('asia_teams.json', 'r') as f:
+
 {
   "AFC_Teams": [
     {"negara": "Jepang", "poin": 1628.81},
