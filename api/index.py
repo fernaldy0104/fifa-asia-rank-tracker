@@ -3,73 +3,44 @@ import json
 from flask import Flask, render_template, request, redirect
 from upstash_redis import Redis
 
+# Vercel mencari variabel 'app' ini
 app = Flask(__name__, template_folder='../templates')
 
-# Menggunakan variabel yang kamu buat di Vercel tadi
 kv = Redis(
     url=os.environ.get('MY_UPSTASH_URL'), 
     token=os.environ.get('MY_UPSTASH_TOKEN')
 )
 
 def get_initial_data():
-    import os
-    # Mencari file asia_teams.json di folder utama (naik 1 level dari api/)
+    # Pastikan file asia_teams.json ada di root folder (luar folder api)
     current_dir = os.path.dirname(os.path.abspath(__file__))
     json_path = os.path.join(current_dir, '..', 'asia_teams.json')
-    
     try:
         with open(json_path, 'r') as f:
             data = json.load(f)
         return data['AFC_Teams']
-    except Exception as e:
-        # Jika file beneran tidak ketemu, ini data manual cadangan (hardcoded)
-        # Tambahkan negara lain di sini agar tidak cuma Indonesia
-        return [
-            {"negara": "Jepang", "poin": 1628.81},
-            {"negara": "Iran", "poin": 1611.16},
-            {"negara": "Korea Selatan", "poin": 1563.99},
-            {"negara": "Australia", "poin": 1552.71},
-            {"negara": "Qatar", "poin": 1507.94},
-            {"negara": "Indonesia", "poin": 1100.12}
-        ]
-        
-@app.route('/')
+    except:
+        # Data cadangan jika file tidak ditemukan
+        return [{"negara": "Jepang", "poin": 1628.81}, {"negara": "Indonesia", "poin": 1100.12}]
 
+@app.route('/')
 def index():
     try:
-        # BARIS DARURAT: Hapus ini setelah semua negara muncul!
-        kv.delete('afc_teams') 
+        # Coba paksa reset sekali saja jika data masih 'Indonesia' saja
+        # kv.delete('afc_teams') 
         
         raw_data = kv.get('afc_teams')
-        # ... sisa kode lainnya tetap sama ...
-    
-    try:
-        # 1. Ambil data dari Redis
-        raw_data = kv.get('afc_teams')
-        
-        # 2. Cek apakah data benar-benar ada dan tidak kosong
-        if raw_data is None or raw_data == "" or raw_data == "null":
+        if not raw_data:
             teams_data = get_initial_data()
-            # Langsung simpan ke Redis agar kunjungan berikutnya tidak kosong
             kv.set('afc_teams', json.dumps(teams_data))
         else:
-            # 3. Jika raw_data berupa string, ubah jadi list. Jika sudah list, pakai langsung.
-            if isinstance(raw_data, str):
-                teams_data = json.loads(raw_data)
-            else:
-                teams_data = raw_data
-        
-        # 4. Sortir berdasarkan poin
+            teams_data = json.loads(raw_data) if isinstance(raw_data, str) else raw_data
+            
         teams_data.sort(key=lambda x: x['poin'], reverse=True)
         return render_template('index.html', teams=teams_data)
-        
     except Exception as e:
-        # Jika masih error JSON, reset saja datanya di Redis
-        backup = get_initial_data()
-        kv.set('afc_teams', json.dumps(backup))
-        return render_template('index.html', teams=backup)
+        return f"Build Success, but Data Error: {str(e)}"
 
-@app.route('/update', methods=['POST'])
-def update():
-    # Logika update skor kamu tetap di sini
-    return redirect('/')
+# Jangan hapus baris ini agar Vercel bisa mengenali Flask
+if __name__ == "__main__":
+    app.run()
