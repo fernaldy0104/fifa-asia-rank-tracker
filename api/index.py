@@ -1,15 +1,13 @@
 import os
-import json
-from flask import Flask, render_template, request, redirect
 from upstash_redis import Redis
+from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__, template_folder='../templates')
 
-# Koneksi ke Redis
-# Gunakan nama variabel baru yang kamu buat tadi
+# PAKAI NAMA BARU DI SINI
 kv = Redis(
-    url=os.environ.get('UPSTASH_REDIS_REST_URL'), 
-    token=os.environ.get('UPSTASH_REDIS_REST_TOKEN')
+    url=os.environ.get('MY_UPSTASH_URL'), 
+    token=os.environ.get('MY_UPSTASH_TOKEN')
 )
 def get_initial_data():
     # Mengacu ke file json di folder utama
